@@ -6,6 +6,7 @@ import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.formlayout.FormLayout;
 import com.vaadin.flow.component.textfield.IntegerField;
 import com.vaadin.flow.data.binder.Binder;
+import com.vaadin.flow.data.binder.ValidationException;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -22,6 +23,16 @@ public class CounterForm extends FormLayout {
         Binder<Counter> binder =
                 new Binder<>(Counter.class);
         binder.bind(valueInput, Counter::getValue, Counter::setValue);
+        binder.addValueChangeListener(valueChangeEvent -> {
+            if (!valueChangeEvent.getHasValue().equals(counter.getValue())) {
+                try {
+                    binder.writeBean(counter);
+                    counterService.save(counter);
+                } catch (ValidationException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+        });
         add(valueInput);
         Button incrementButton = new Button("Ещё",
                 event -> {
